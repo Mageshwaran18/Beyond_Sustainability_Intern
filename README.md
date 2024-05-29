@@ -2,8 +2,8 @@
 
 Install all the requirements
 
-pip install -r requirements.txt
+    pip install -r requirements.txt
 
 To run the streamlit 
 
-streamlit run app.py
+    streamlit run app.py
