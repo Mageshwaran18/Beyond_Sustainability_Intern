@@ -16,17 +16,34 @@ model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 prompt=f"""Consider you're professional and
  you have the ability to tell the Mitigation strategy for the emission of a company.
- I need  top 10 mitigation strategy only which will be applicable for the particular(Precise) company under the given budget limit. 
+ I need  top 20 mitigation strategy only which will be applicable for the particular(Precise) company under the given budget limit. 
  It should be in single lined.The output shouldn't contains any * symbols and # symbols
  """
 def get_gemini_response(user_input ,prompt):
-    response=model.generate_content([user_input,prompt])
+    response=model.generate_content([prompt,user_input])
+    try:
+        response = model.generate_content([user_input, prompt])
+    except google.api_core.exceptions.InternalServerError as e:
+        print(f"Internal server error: {e}")
     return response.text
 
 
 def process_entries(result):
-    
     return result
+
+def user_input_generator(company_name, industry_name, scope1_emission, scope2_emission,scope3_emission, budget):
+    txt = f"""My company name is {company_name} and we are in the {industry_name} industry. We have scope 1 emissions such as {', '.join(scope1_emission)}.
+        Scope 2 emissions include {', '.join(scope2_emission)} and Scope3 emissions include {', '.join(scope3_emission)} the budget is ${budget} million.
+        """ 
+    return txt
+
+def calculate_height(text, line_height=20):
+    lines = max(1, len(text.split('\n')))
+    return lines * line_height
+
+def cleaned_text(text):
+    cleaned_text = text.replace('#', '').replace('*', '')
+    return cleaned_text
 
 # Streamlit app
 st.title("Company Information Form")
@@ -44,24 +61,14 @@ scope3_selected = st.multiselect("Scope 3", scope3_options)
 
 budget = st.text_input("Budget")
 
-def user_input_generator(company_name, industry_name, scope1_emission, scope2_emission,scope3_emission, budget):
-    txt = f"""My company name is {company_name} and we are in the {industry_name} industry. We have scope 1 emissions such as {', '.join(scope1_emission)}.
-        Scope 2 emissions include {', '.join(scope2_emission)} and Scope3 emissions include {', '.join(scope3_emission)} the budget is ${budget} million.
-        """ 
-    return txt
-
-def calculate_height(text, line_height=20):
-    lines = max(1, len(text.split('\n')))
-    return lines * line_height
-
-def cleaned_text(text):
-    cleaned_text = text.replace('#', '').replace('*', '')
-    return cleaned_text
-
 if st.button("Submit"):
     user_input = user_input_generator(company_name,industry_name,scope1_selected,scope2_selected,scope3_selected,budget)
     result = get_gemini_response(user_input ,prompt)
     cleaned_result=cleaned_text(result)
     hei=calculate_height(cleaned_result)
-    st.text_area("Output:-", cleaned_result, height=hei+hei)
+    st.text_area("Output:-", cleaned_result, height=hei)
+
+
+
+
 
